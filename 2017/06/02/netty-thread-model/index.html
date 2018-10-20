@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Java,Netty," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="线程模型指定了操作系统，编程语言，框架或者应用程序的上下文中线程管理的关键方面。这里，简要学习Netty的EventLoop和线程模型。">
+<meta name="keywords" content="Java,Netty">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netty中EventLoop和线程模型">
+<meta property="og:url" content="http://yoursite.com/2017/06/02/netty-thread-model/index.html">
+<meta property="og:site_name" content="darcy he">
+<meta property="og:description" content="线程模型指定了操作系统，编程语言，框架或者应用程序的上下文中线程管理的关键方面。这里，简要学习Netty的EventLoop和线程模型。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://static.zybuluo.com/csqiang1992/fuxebwtuzouhooxn6krfghk9/ch7-eventloop2.png">
+<meta property="og:image" content="http://static.zybuluo.com/csqiang1992/7x6gdbotzy9lh7hhg8bds0yi/ch7-asyncthread.png">
+<meta property="og:image" content="http://static.zybuluo.com/csqiang1992/0xbl35r1gq456h7rfx9f7exw/ch7-oio-thread.png">
+<meta property="og:updated_time" content="2018-10-20T11:55:44.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Netty中EventLoop和线程模型">
+<meta name="twitter:description" content="线程模型指定了操作系统，编程语言，框架或者应用程序的上下文中线程管理的关键方面。这里，简要学习Netty的EventLoop和线程模型。">
+<meta name="twitter:image" content="http://static.zybuluo.com/csqiang1992/fuxebwtuzouhooxn6krfghk9/ch7-eventloop2.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/06/02/netty-thread-model/"/>
+
+
+
+
+
+  <title>Netty中EventLoop和线程模型 | darcy he</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">darcy he</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">求知 孤勇 温柔</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/06/02/netty-thread-model/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="darcy">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/self.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="darcy he">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Netty中EventLoop和线程模型</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-02T17:09:55+08:00">
+                2017-06-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Netty/" itemprop="url" rel="index">
+                    <span itemprop="name">Netty</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2017/06/02/netty-thread-model/" class="leancloud_visitors" data-flag-title="Netty中EventLoop和线程模型">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数&#58;</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  
+                </span>
+              
+
+              
+
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>线程模型指定了操作系统，编程语言，框架或者应用程序的上下文中线程管理的关键方面。这里，简要学习Netty的EventLoop和线程模型。</p>
+</blockquote>
+<a id="more"></a>
+<hr>
+<h2 id="线程模型概述"><a href="#线程模型概述" class="headerlink" title="线程模型概述"></a>线程模型概述</h2><ul>
+<li>按需创建和启动新的Thread来执行任务的方式在高负载下表现很差。</li>
+<li><code>Executor API</code>: 池化和重用线程相对于简单的为每个任务都创建和销毁线程是一种进步，但是它并不能消除由上下文切换所带来的开销，并且开销将随着线程数目的增加很快变得明显，而且在高负载下表现更差。</li>
+</ul>
+<hr>
+<h2 id="EventLoop接口"><a href="#EventLoop接口" class="headerlink" title="EventLoop接口"></a>EventLoop接口</h2><ul>
+<li>网络框架都是通过<strong>运行任务</strong>来处理在<strong>连接的生命周期</strong>内发生的事件, 通过<strong>事件循环</strong>来描述，其对应于Netty中就是<code>netty.io.channel.EventLoop</code>,基本编程模型如下
+　<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在循环中处理事件</span></span><br><span class="line"><span class="keyword">while</span> (!terminated) &#123;</span><br><span class="line">    List&lt;Runnable&gt; readyEvents = blockUntilEventsReady();</span><br><span class="line">        <span class="keyword">for</span> (Runnable ev: readyEvents) &#123;</span><br><span class="line">            ev.run();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="EventLoop类层次结果"><a href="#EventLoop类层次结果" class="headerlink" title="EventLoop类层次结果"></a>EventLoop类层次结果</h3><ul>
+<li><code>io.netty.util.concurrent</code> 包构建于JDK的 <code>java.util.concurrent</code> 基础之上，用来提供线程执行器．<code>io.netty.channel</code>包中的类为了与Channel的事件进行交互，拓展了这些接口类．</li>
+<li>在这个模型中，一个EventLoop将由一个永远都不会改变的线程来驱动，同时任务(Runnable或者Callable)可以直接提交给EventLoop，以立即执行或者调度执行。可以创建多个EventLoop实例以优化资源的使用，并且单个EventLoop可能被指派服务于多个Channel。</li>
+<li>事件和任务总是以FIFO的方式顺序执行，数据内容总能被顺序处理。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Will handle all the I/O operations for a &#123;Channel&#125; once registered.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * One &#123;EventLoop&#125; instance will usually handle more than one &#123;Channel&#125; but this may depend on implementation details and internals.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">EventLoop</span> <span class="keyword">extends</span> <span class="title">OrderedEventExecutor</span>, <span class="title">EventLoopGroup</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 当前EventLoop实例所属的EventLoopGroup。</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function">EventLoopGroup <span class="title">parent</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="http://static.zybuluo.com/csqiang1992/fuxebwtuzouhooxn6krfghk9/ch7-eventloop2.png" alt="ch7-eventloop2.png-60.6kB"></p>
+<h3 id="Netty4中的IO和事件处理"><a href="#Netty4中的IO和事件处理" class="headerlink" title="Netty4中的IO和事件处理"></a>Netty4中的IO和事件处理</h3><ul>
+<li><strong>IO操作所触发的事件将流经安装了一个或者多个ChannelHandler的ChannelPipeline</strong>。传播这些事件的方法调用可以随后被ChannelHandler所拦截，并且按需处理事件。</li>
+<li><strong>Netty4 中所有的IO操作和事件都由已经被分配给了EventLoop的那个Thread来处理，通过在同一个线程中处理某个给定的EventLoop中所产生的所有事件，消除了在多个ChannelHandler中同步的必要。</strong>。</li>
+</ul>
+<h3 id="Netty3中的IO操作"><a href="#Netty3中的IO操作" class="headerlink" title="Netty3中的IO操作"></a>Netty3中的IO操作</h3><ul>
+<li>入站事件在IO线程(对应于Netty4中的EventLoop)中处理，但是出站事件都由调度线程来处理，可能是IO线程或者其他线程，但是这可能需要在ChannelHandler中对出站事件进行同步(Channel可能跨越多个ChannelPipeline)，或者在调度线程和IO线程中进行上下文切换。</li>
+</ul>
+<hr>
+<h2 id="任务的调度"><a href="#任务的调度" class="headerlink" title="任务的调度"></a>任务的调度</h2><ul>
+<li>需要调度任务在稍后执行或者周期性的执行．</li>
+</ul>
+<h3 id="JDK的任务调度API"><a href="#JDK的任务调度API" class="headerlink" title="JDK的任务调度API"></a>JDK的任务调度API</h3><ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/api/" target="_blank" rel="noopener">相关文档</a> (<code>java.util.concurrent.Executors</code>)</li>
+<li>Executors可以创建<code>ScheduledThreadPool</code>进行任务的调度执行．</li>
+</ul>
+<p><strong>使用SchduleExecutorService调度任务</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ScheduledExecutorService executor = Executors.newScheduledThreadPool(<span class="number">10</span>);</span><br><span class="line">ScheduledFuture&lt;?&gt; future = executor.schedule(</span><br><span class="line"><span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">"60 seconds later"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;, <span class="number">60</span>, TimeUnit.SECONDS); <span class="comment">// 60s后执行</span></span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">executor.shutdown();</span><br></pre></td></tr></table></figure>
+<h3 id="使用EventLoop调度任务"><a href="#使用EventLoop调度任务" class="headerlink" title="使用EventLoop调度任务"></a>使用EventLoop调度任务</h3><ul>
+<li><code>ScheduledExecutorService</code>需要额外的线程来管理线程池，所以有其局限性。Netty通过<strong>Channel的EventLoop实现任务调度</strong>解决了这一问题．</li>
+<li>EventLoop实现了<code>ScheduledExecutorService</code>,所以可以使用JDK提供的所有方法。</li>
+</ul>
+<p><strong>使用EventLoop调度任务</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Channel ch = ...</span><br><span class="line">ScheduledFuture&lt;?&gt; future = ch.eventLoop().schedule(</span><br><span class="line">    <span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"60 seconds later"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;, <span class="number">60</span>, TimeUnit.SECONDS);　<span class="comment">// 60之后执行</span></span><br></pre></td></tr></table></figure>
+<p><strong>使用EventLoop周期性调度任务</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Channel ch = ...</span><br><span class="line">ScheduledFuture&lt;?&gt; future = ch.eventLoop().scheduleAtFixedRate( // 固定频率</span><br><span class="line">    new Runnable() &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        System.out.println(&quot;Run every 60 seconds&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;, 60, 60, TimeUnit.Seconds);</span><br></pre></td></tr></table></figure>
+<p><strong>使用EventLoop取消任务的执行</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ScheduledFuture&lt;?&gt; future = ch.eventLoop().scheduleAtFixedRate(...);</span><br><span class="line"><span class="comment">// Some other code that runs...</span></span><br><span class="line"><span class="keyword">boolean</span> mayInterruptIfRunning = <span class="keyword">false</span>;</span><br><span class="line">future.cancel(mayInterruptIfRunning); <span class="comment">// 取消该任务，防止再次执行。</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h2><h3 id="线程管理"><a href="#线程管理" class="headerlink" title="线程管理"></a>线程管理</h3><ul>
+<li>Netty线程模型的卓越性能取决于<strong>对于当前执行的Thread的身份的确定</strong>，即确定它是否是分配给<strong>当前Channel以及它的EventLoop</strong>（Channel在其生命周期内只注册一个EventLoop, 而一个EventLoop可以被分配给1个或者多个Channel，EventLoop在其生命周期内也只和一个Thread绑定）的那一个线程(<strong>一个EventLoop将处理一个Channel整个生命周期内的所有事件</strong>)。</li>
+<li>如果当前的调度线程是支撑EventLoop的线程，那么所提交的代码块将会被<strong>直接执行</strong>；否则，EventLoop将调度该任务以便稍后执行，并且将它放入内部队列中，当EventLoop下次处理它的事件时，就会执行队列中的那些任务/事件。(This explains how any Thread can interact directly with the Channel without requiring synchronization in the ChannelHandlers.)这就解释了Thread如何与Channel直接交互而不需要在ChannelHandlers中同步。</li>
+<li>EventLoop的执行逻辑: 将要<strong>在EventLoop执行的任务</strong> -&gt; 在把任务传递给execute()方法之后，执行检查以确定<strong>当前调用线程</strong>是否就是分配给EventLoop的那个线程；-&gt; 如果是，那么在eventLoop中，可以直接执行任务，否则，将任务放入到EventLoop队列中以便EventLoop下一次处理它的事件时执行．</li>
+<li><strong>每个EventLoop都有自己的任务队列，独立于任务其他的EventLoop</strong>。</li>
+<li>不要将一个长时间运行的任务放入到执行队列中，因为它将<strong>阻塞需要在同一个线程上运行的其他任务</strong>。<strong>如果需要执行阻塞调用或者耗时任务，可以使用一个专门的EventExecutor</strong>(<a href="http://frobisher.me/2017/06/02/netty-channelhandler-channelpipeline/#more" target="_blank" rel="noopener">参见上一篇文章</a> Pipleline代码的注释中)。</li>
+</ul>
+<h3 id="EventLoop线程的分配"><a href="#EventLoop线程的分配" class="headerlink" title="EventLoop线程的分配"></a>EventLoop线程的分配</h3><ul>
+<li>服务于Channel IO和事件的EventLoop包含在EventLoopGroup中，不同的传输实现中EventLoop的创建和分配不一样</li>
+</ul>
+<p><strong>异步传输</strong></p>
+<ul>
+<li>异步传输实现只使用了少量的EventLoop(1:1对应的Thread),而且在当前的线程模型中，可能会被<strong>多个Channel所共享</strong>，这样就可以通过少量的Thread来支持大量的Channel，而不是每个Channel都分配一个Thread.</li>
+<li>EventLoopGroup为每个新创建的Channel分配一个EventLoop(可以通过轮询保证均衡分布)，并且相同的EventLoop可能被分配给多个Channel，一旦一个Channel被分配给了一个EventLoop,那么在Channel的生命周期内，所有的操作都是由这个EventLoop以及相关联的线程进行处理．</li>
+<li>EventLoop的分配方式对于ThreaLocal的使用有影响，因为一个EventLoop会支持多个Channel，所以对于所有相关联的Channel而言，ThreadLocal都将是一样的。</li>
+</ul>
+<p><img src="http://static.zybuluo.com/csqiang1992/7x6gdbotzy9lh7hhg8bds0yi/ch7-asyncthread.png" alt="ch7-asyncthread.png-148.1kB"></p>
+<p><strong>阻塞传输</strong></p>
+<ul>
+<li>每个Channel都会被分配一个EventLoop(1:1对应的线程)。每个Channel的IO事件也是被一个线程所处理。这一点上和异步的方式保持一致 – 每个Channel的IO事件都是由关联的唯一线程进行处理。</li>
+</ul>
+<p><img src="http://static.zybuluo.com/csqiang1992/0xbl35r1gq456h7rfx9f7exw/ch7-oio-thread.png" alt="ch7-oio-thread.png-89.8kB"></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/Netty/" rel="tag"># Netty</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/02/netty-channelhandler-channelpipeline/" rel="next" title="Netty中的ChannelHandler和ChannelPipeline">
+                <i class="fa fa-chevron-left"></i> Netty中的ChannelHandler和ChannelPipeline
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/06/02/netty-bootstrap/" rel="prev" title="Netty中的引导(Boostrap)">
+                Netty中的引导(Boostrap) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/self.jpg"
+                alt="darcy" />
+            
+              <p class="site-author-name" itemprop="name">darcy</p>
+              <p class="site-description motion-element" itemprop="description">Do Have Patience In What You LOVE.</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">53</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">33</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="http://douban.com/people/70670266" target="_blank" title="douban">
+                      
+                        <i class="fa fa-fw fa-globe"></i>douban</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友链
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.zhenlanghuo.top/" title="zhenlang huo" target="_blank">zhenlang huo</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://xawei.me/" title="xinan wei" target="_blank">xinan wei</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#线程模型概述"><span class="nav-number">1.</span> <span class="nav-text">线程模型概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#EventLoop接口"><span class="nav-number">2.</span> <span class="nav-text">EventLoop接口</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#EventLoop类层次结果"><span class="nav-number">2.1.</span> <span class="nav-text">EventLoop类层次结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Netty4中的IO和事件处理"><span class="nav-number">2.2.</span> <span class="nav-text">Netty4中的IO和事件处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Netty3中的IO操作"><span class="nav-number">2.3.</span> <span class="nav-text">Netty3中的IO操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#任务的调度"><span class="nav-number">3.</span> <span class="nav-text">任务的调度</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#JDK的任务调度API"><span class="nav-number">3.1.</span> <span class="nav-text">JDK的任务调度API</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用EventLoop调度任务"><span class="nav-number">3.2.</span> <span class="nav-text">使用EventLoop调度任务</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现细节"><span class="nav-number">4.</span> <span class="nav-text">实现细节</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#线程管理"><span class="nav-number">4.1.</span> <span class="nav-text">线程管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#EventLoop线程的分配"><span class="nav-number">4.2.</span> <span class="nav-text">EventLoop线程的分配</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">darcy</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.4.js"></script>
+  <script>AV.initialize("nDVrc1Rvjlwx4V9XScsLSm9q-gzGzoHsz", "4ONqgToWREwRHxcX9qRXFhlL");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

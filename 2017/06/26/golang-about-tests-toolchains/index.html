@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Golang," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="刚学习Golang的时候，对测试和Beachmark，工具链一头雾水，这里进行小小的总结．">
+<meta name="keywords" content="Golang">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Golang-测试和工具链介绍">
+<meta property="og:url" content="http://yoursite.com/2017/06/26/golang-about-tests-toolchains/index.html">
+<meta property="og:site_name" content="darcy he">
+<meta property="og:description" content="刚学习Golang的时候，对测试和Beachmark，工具链一头雾水，这里进行小小的总结．">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-10-20T11:29:02.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Golang-测试和工具链介绍">
+<meta name="twitter:description" content="刚学习Golang的时候，对测试和Beachmark，工具链一头雾水，这里进行小小的总结．">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/06/26/golang-about-tests-toolchains/"/>
+
+
+
+
+
+  <title>Golang-测试和工具链介绍 | darcy he</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">darcy he</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">求知 孤勇 温柔</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/06/26/golang-about-tests-toolchains/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="darcy">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/self.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="darcy he">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Golang-测试和工具链介绍</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-26T23:19:52+08:00">
+                2017-06-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Golang/" itemprop="url" rel="index">
+                    <span itemprop="name">Golang</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2017/06/26/golang-about-tests-toolchains/" class="leancloud_visitors" data-flag-title="Golang-测试和工具链介绍">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数&#58;</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  
+                </span>
+              
+
+              
+
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>刚学习Golang的时候，对测试和Beachmark，工具链一头雾水，这里进行小小的总结．</p>
+</blockquote>
+ <a id="more"></a>
+<hr>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><h3 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h3><ul>
+<li>工具链和标准库自带的单元框架使用起来有一定的规范．<ul>
+<li>测试代码必须放在当前包以”_test.go”结尾的文件中．</li>
+<li>测试函数以Test为名称前缀</li>
+<li>测试命令(go test)忽略以<code>_</code>和<code>.</code>开头的测试文件</li>
+<li>正常编译操作(go build / go install)会忽略测试文件．</li>
+</ul>
+</li>
+<li>标准库testing提供<strong>T来控制结果和行为</strong><ul>
+<li>Fail  失败，继续执行当前测试函数</li>
+<li>FailNow 失败，终止执行当前测试函数</li>
+<li>SkipNow 跳过，停止执行当前测试函数．</li>
+<li>Log　输出错误信息，仅仅失败或者-v时候输出　LogF</li>
+<li>Parallel 和有同样设置的测试函数并行执行．</li>
+<li>Error Fail+Log  Errorf</li>
+<li>Fatal FailNow+Log Fatalf</li>
+</ul>
+</li>
+<li>常用测试参数<ul>
+<li>-args cli参数，</li>
+<li>-v 详细信息</li>
+<li>-parallel 并发执行，默认值是GOMAXPROCS -parallel 8</li>
+<li>-run 指定测试函数，正则表达式</li>
+<li>-timeout　全部测试函数累加时间超时引发panic，默认值10ms，　-timeout 1m20s</li>
+<li>-count 重复测试次数，默认值1</li>
+</ul>
+</li>
+</ul>
+<p><strong>demo</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> s1</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"testing"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestA</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	t.Parallel()</span><br><span class="line">	time.Sleep(time.Second * <span class="number">2</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestB</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> os.Args[<span class="built_in">len</span>(os.Args) - <span class="number">1</span>] == <span class="string">"b"</span> &#123;</span><br><span class="line">		t.Parallel()</span><br><span class="line">	&#125;</span><br><span class="line">	time.Sleep(time.Second * <span class="number">2</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">darcy@darcy-ubuntu:~/go/src/s1$ go test -v</span><br><span class="line">=== RUN   TestA</span><br><span class="line">=== RUN   TestB</span><br><span class="line">--- PASS: TestB (2.00s)</span><br><span class="line">--- PASS: TestA (2.00s)</span><br><span class="line">PASS</span><br><span class="line">ok  	s1	4.003s</span><br><span class="line">darcy@darcy-ubuntu:~/go/src/s1$ go test -v -args "b"</span><br><span class="line">=== RUN   TestA</span><br><span class="line">=== RUN   TestB</span><br><span class="line">--- PASS: TestB (2.00s)</span><br><span class="line">--- PASS: TestA (2.00s)</span><br><span class="line">PASS</span><br><span class="line">ok  	s1	2.003s // 两个Test并行执行．</span><br><span class="line">darcy@darcy-ubuntu:~/go/src/s1$</span><br></pre></td></tr></table></figure>
+<p><strong>单元测试就到这里了，其他的套路一样．</strong></p>
+<h3 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h3><ul>
+<li><strong>性能测试函数以Benchmark为名称前缀，　同样保存在*_test.go文件中</strong></li>
+</ul>
+<p>go文件见<a href="http://frobisher.me/2017/06/26/golang-about-reflects/#more" target="_blank" rel="noopener">上一篇文章</a>的最后两个go文件．</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">darcy@darcy-ubuntu:~/go/src/ch10$ go test -run Node -bench . -benchmem</span><br><span class="line">BenchmarkCall-8    	1000000000	         2.83 ns/op	       0 B/op	       0 allocs/op</span><br><span class="line">BenchmarkRCall-8   	 3000000	       529 ns/op	       8 B/op	       1 allocs/op</span><br><span class="line">BenchmarkSet-8     	2000000000	         0.94 ns/op	       0 B/op	       0 allocs/op</span><br><span class="line">BenchmarkRset-8    	 5000000	       257 ns/op	      16 B/op	       2 allocs/op</span><br><span class="line">PASS</span><br><span class="line">ok  	ch10	8.778s</span><br><span class="line">darcy@darcy-ubuntu:~/go/src/ch10$ go test -bench .</span><br><span class="line">BenchmarkCall-8    	1000000000	         2.83 ns/op</span><br><span class="line">BenchmarkRCall-8   	 3000000	       515 ns/op</span><br><span class="line">BenchmarkSet-8     	2000000000	         0.94 ns/op</span><br><span class="line">BenchmarkRset-8    	 5000000	       257 ns/op</span><br><span class="line">PASS</span><br><span class="line">ok  	ch10	8.739s</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 设定CPU个数</span><br><span class="line">darcy@darcy-ubuntu:~/go/src/ch10$ go test -bench . -cpu 1,2,4,8</span><br><span class="line">BenchmarkCall      	1000000000	         2.83 ns/op</span><br><span class="line">BenchmarkCall-2    	1000000000	         2.83 ns/op</span><br><span class="line">BenchmarkCall-4    	1000000000	         2.86 ns/op</span><br><span class="line">BenchmarkCall-8    	1000000000	         2.83 ns/op</span><br><span class="line">BenchmarkRCall     	 3000000	       521 ns/op</span><br><span class="line">BenchmarkRCall-2   	 3000000	       531 ns/op</span><br><span class="line">BenchmarkRCall-4   	 3000000	       530 ns/op</span><br><span class="line">BenchmarkRCall-8   	 3000000	       526 ns/op</span><br><span class="line">BenchmarkSet       	2000000000	         0.94 ns/op</span><br><span class="line">BenchmarkSet-2     	2000000000	         0.94 ns/op</span><br><span class="line">BenchmarkSet-4     	2000000000	         0.94 ns/op</span><br><span class="line">BenchmarkSet-8     	2000000000	         0.94 ns/op</span><br><span class="line">BenchmarkRset      	 5000000	       257 ns/op</span><br><span class="line">BenchmarkRset-2    	 5000000	       255 ns/op</span><br><span class="line">BenchmarkRset-4    	 5000000	       258 ns/op</span><br><span class="line">BenchmarkRset-8    	 5000000	       257 ns/op</span><br><span class="line">PASS</span><br><span class="line">ok  	ch10	35.191s</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 设置最小测试时间</span><br><span class="line">darcy@darcy-ubuntu:~/go/src/ch10$ go test -bench . -benchtime 20s</span><br><span class="line">BenchmarkCall-8    	10000000000	         2.82 ns/op</span><br><span class="line">BenchmarkRCall-8   	50000000	       529 ns/op</span><br><span class="line">BenchmarkSet-8     	10000000000	         0.94 ns/op</span><br><span class="line">BenchmarkRset-8    	100000000	       256 ns/op</span><br><span class="line">PASS</span><br><span class="line">ok  	ch10	91.052s</span><br></pre></td></tr></table></figure>
+<p>其他还有<strong>测试内存，代码覆盖率，性能监控</strong>的．这里不详细列了．</p>
+<h3 id="性能监控"><a href="#性能监控" class="headerlink" title="性能监控"></a>性能监控</h3><p><strong>可以提供参数保存采样数据</strong></p>
+<ul>
+<li>-cpuprofile 执行时间采样到<strong>指定文件</strong></li>
+<li>-memprofile 内存分配</li>
+<li>-memprofilerate 内存采样起始值，默认512kb</li>
+<li>-blockprofile 阻塞时间采样</li>
+<li>-blockprofilerate 阻塞时间采样起始值</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 性能监控</span><br><span class="line">darcy@darcy-ubuntu:~/go/src/ch10$ go test -bench . -memprofile mem.out -cpuprofile cpu.out  net/http</span><br><span class="line">BenchmarkCookieString-8                      	 1000000	      2208 ns/op	     384 B/op	       3 allocs/op</span><br><span class="line">//...</span><br><span class="line">B/op	       0 allocs/op</span><br><span class="line">BenchmarkReadRequestChrome-8                 	  200000	      8938 ns/op	  68.36 MB/s	    1809 B/op	      14 allocs/op</span><br><span class="line">BenchmarkReadRequestCurl-8                   	  300000	      4460 ns/op	  17.49 MB/s	     880 B/op	       9 allocs/op</span><br><span class="line">BenchmarkReadRequestApachebench-8            	  300000	      4467 ns/op	  18.35 MB/s	     883 B/op	       9 allocs/op</span><br><span class="line">BenchmarkReadRequestSiege-8                  	  300000	      5873 ns/op	  25.71 MB/s	     965 B/op	      11 allocs/op</span><br><span class="line">BenchmarkReadRequestWrk-8                    	  500000	      3272 ns/op	  12.22 MB/s	     832 B/op	       7 allocs/op</span><br><span class="line">//...</span><br><span class="line">BenchmarkCloseNotifier-8                     	   10000	    165677 ns/op	    3427 B/op	      55 allocs/op</span><br><span class="line">PASS</span><br><span class="line">ok  	net/http	79.762s</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="工具链"><a href="#工具链" class="headerlink" title="工具链"></a>工具链</h2><h3 id="go-build"><a href="#go-build" class="headerlink" title="go build"></a>go build</h3><ul>
+<li>默认每次都会重新编译除了标准库以外的所有依赖包</li>
+<li><p>参数列表<br>  -　-o 可执行文件名，默认和目录同名<br>  -　-a 强制重新编译包括标准库在内的所有包<br>  -　-p 并行编译所使用的CPU数目<br>  -　-v 显示待编译包的名字<br>  -　-race　启动数据竞争检查<br>  -　-gcflags 编译器参数<br>  -　- ldflags 链接器参数</p>
+</li>
+<li><p>gcflags</p>
+<ul>
+<li>-B 禁止越界检查</li>
+<li>-N 禁用优化</li>
+<li>-l 禁用内联</li>
+<li>-u 禁用unsafe</li>
+<li>-S 输出汇编代码</li>
+<li>-m 输出优化信息</li>
+</ul>
+</li>
+<li><p>ldflags </p>
+<ul>
+<li>-s　禁用符号表</li>
+<li>-w 禁用DRAWF调试信息</li>
+<li>-X 设置字符串全局变量</li>
+<li>-H 设置可执行文件格式</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>more 参数：　go tool compile -h ; go tool link -h; src/cmd/compile or link目录．</p>
+</blockquote>
+<h3 id="go-install"><a href="#go-install" class="headerlink" title="go install"></a>go install</h3><ul>
+<li>和build参数相同，但是会<strong>将编译结果安装到bin, pkg目录下．而且go install支持增量编译，没有修改的情况下，直接链接pkg目录中的静态包</strong>．(对比静态库和所有源文件修改时间来判断源代码是否改变.来决定是否对包进行重新编译．采用buildin算法：将包中的全部文件名，运行时版本号，导入的第三方包信息数据合并后hash)</li>
+</ul>
+<h3 id="go-get"><a href="#go-get" class="headerlink" title="go get"></a>go get</h3><ul>
+<li>将第三方包下载到GOPATH列表中的第一个工作空间，</li>
+<li>参数<br>  -　-d　仅仅下载，不安装<br>  -　-u 更新包以及依赖项<br>  -　-f 和－u配合使用，强制更新，不检查是否过期<br>  -　-t 下载测试代码所需的包<br>  -　-insecure 使用HTTP等非安全的协议<br>  -　-v 输出详细信息<br>  -　-x 显示正在执行的命令</li>
+</ul>
+<h3 id="go-env"><a href="#go-env" class="headerlink" title="go env　"></a>go env　</h3><ul>
+<li>全部指定的环境参数</li>
+</ul>
+<h3 id="go-clean"><a href="#go-clean" class="headerlink" title="go clean"></a>go clean</h3><ul>
+<li>清理工作目录，删除编译和安装遗留的目标文件</li>
+<li>参数<ul>
+<li>-i　清理go install安装的文件</li>
+<li>-r 递归清理所有依赖的包</li>
+<li>-x </li>
+<li>-n</li>
+</ul>
+</li>
+</ul>
+<p>还有一些交叉编译，条件编译，预处理的知识暂时用不到，以后再说把．</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Golang/" rel="tag"># Golang</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/26/golang-about-reflects/" rel="next" title="Golang-反射">
+                <i class="fa fa-chevron-left"></i> Golang-反射
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/07/06/seven-concurrency-models-introductions/" rel="prev" title="七并发模型简要介绍">
+                七并发模型简要介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/self.jpg"
+                alt="darcy" />
+            
+              <p class="site-author-name" itemprop="name">darcy</p>
+              <p class="site-description motion-element" itemprop="description">Do Have Patience In What You LOVE.</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">53</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">33</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="http://douban.com/people/70670266" target="_blank" title="douban">
+                      
+                        <i class="fa fa-fw fa-globe"></i>douban</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友链
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.zhenlanghuo.top/" title="zhenlang huo" target="_blank">zhenlang huo</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://xawei.me/" title="xinan wei" target="_blank">xinan wei</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#测试"><span class="nav-number">1.</span> <span class="nav-text">测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单元测试"><span class="nav-number">1.1.</span> <span class="nav-text">单元测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#性能测试"><span class="nav-number">1.2.</span> <span class="nav-text">性能测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#性能监控"><span class="nav-number">1.3.</span> <span class="nav-text">性能监控</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#工具链"><span class="nav-number">2.</span> <span class="nav-text">工具链</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#go-build"><span class="nav-number">2.1.</span> <span class="nav-text">go build</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-install"><span class="nav-number">2.2.</span> <span class="nav-text">go install</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-get"><span class="nav-number">2.3.</span> <span class="nav-text">go get</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-env"><span class="nav-number">2.4.</span> <span class="nav-text">go env　</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-clean"><span class="nav-number">2.5.</span> <span class="nav-text">go clean</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">darcy</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.4.js"></script>
+  <script>AV.initialize("nDVrc1Rvjlwx4V9XScsLSm9q-gzGzoHsz", "4ONqgToWREwRHxcX9qRXFhlL");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

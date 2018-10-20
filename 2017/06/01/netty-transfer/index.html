@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Java,Netty," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Netty为传输实现了通用的API，相比JDK的BIO和NIO和AIO风格各异的编程，这一点确实是福音…这里就简单的对比一下">
+<meta name="keywords" content="Java,Netty">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netty传输浅析">
+<meta property="og:url" content="http://yoursite.com/2017/06/01/netty-transfer/index.html">
+<meta property="og:site_name" content="darcy he">
+<meta property="og:description" content="Netty为传输实现了通用的API，相比JDK的BIO和NIO和AIO风格各异的编程，这一点确实是福音…这里就简单的对比一下">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://note.youdao.com/yws/res/40492/WEBRESOURCEbf16f89760ccf0986888f2e816d714fd">
+<meta property="og:image" content="http://note.youdao.com/yws/res/40497/WEBRESOURCE54a892e9e1a15b60158dfef4a674a679">
+<meta property="og:updated_time" content="2018-10-20T11:55:56.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Netty传输浅析">
+<meta name="twitter:description" content="Netty为传输实现了通用的API，相比JDK的BIO和NIO和AIO风格各异的编程，这一点确实是福音…这里就简单的对比一下">
+<meta name="twitter:image" content="http://note.youdao.com/yws/res/40492/WEBRESOURCEbf16f89760ccf0986888f2e816d714fd">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/06/01/netty-transfer/"/>
+
+
+
+
+
+  <title>Netty传输浅析 | darcy he</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">darcy he</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">求知 孤勇 温柔</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/06/01/netty-transfer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="darcy">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/self.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="darcy he">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Netty传输浅析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-01T19:50:15+08:00">
+                2017-06-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Netty/" itemprop="url" rel="index">
+                    <span itemprop="name">Netty</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2017/06/01/netty-transfer/" class="leancloud_visitors" data-flag-title="Netty传输浅析">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数&#58;</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  
+                </span>
+              
+
+              
+
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>Netty为传输实现了通用的API，相比JDK的BIO和NIO和AIO风格各异的编程，这一点确实是福音…<br>这里就简单的对比一下</p>
+</blockquote>
+<a id="more"></a>
+<hr>
+<h2 id="传输迁移"><a href="#传输迁移" class="headerlink" title="传输迁移"></a>传输迁移</h2><h3 id="不通过Netty使用OIO和NIO"><a href="#不通过Netty使用OIO和NIO" class="headerlink" title="不通过Netty使用OIO和NIO"></a>不通过Netty使用OIO和NIO</h3><ul>
+<li>就是JDK普通的Socket通信和Channel通信。</li>
+<li>参见 <a href="http://frobisher.me/2017/05/27/java-bio-nio-aio-demo/" target="_blank" rel="noopener">BIO, NIO, AIO在网络编程中简单应用</a></li>
+</ul>
+<h3 id="通过Netty使用OIO和NIO"><a href="#通过Netty使用OIO和NIO" class="headerlink" title="通过Netty使用OIO和NIO"></a>通过Netty使用OIO和NIO</h3><p><strong>NettyOioServer.java</strong></p>
+<ul>
+<li>不同点在于EventLoopGrou的类型和服务器Channel的类型。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NettyOioServer</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">server</span><span class="params">(<span class="keyword">int</span> port)</span></span></span><br><span class="line"><span class="function">      <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> ByteBuf buf =</span><br><span class="line">        Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(<span class="string">"Hi!\r\n"</span>, Charset.forName(<span class="string">"UTF-8"</span>)));</span><br><span class="line">    EventLoopGroup group = <span class="keyword">new</span> OioEventLoopGroup();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">//创建 ServerBootstrap</span></span><br><span class="line">      ServerBootstrap b = <span class="keyword">new</span> ServerBootstrap();</span><br><span class="line">      b.group(group)</span><br><span class="line">          <span class="comment">//使用 OioEventLoopGroup以允许阻塞模式（旧的I/O）</span></span><br><span class="line">          .channel(OioServerSocketChannel.class)</span><br><span class="line">          .localAddress(<span class="keyword">new</span> InetSocketAddress(port))</span><br><span class="line">          <span class="comment">//指定 ChannelInitializer，对于每个已接受的连接都调用它</span></span><br><span class="line">          .childHandler(<span class="keyword">new</span> ChannelInitializer&lt;SocketChannel&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">initChannel</span><span class="params">(SocketChannel ch)</span></span></span><br><span class="line"><span class="function">                <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">              ch.pipeline().addLast(</span><br><span class="line">                  <span class="comment">//添加一个 ChannelInboundHandlerAdapter以拦截和处理事件</span></span><br><span class="line">                  <span class="keyword">new</span> ChannelInboundHandlerAdapter() &#123;</span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">channelActive</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">                        ChannelHandlerContext ctx)</span></span></span><br><span class="line"><span class="function">                        <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                      ctx.writeAndFlush(buf.duplicate())</span><br><span class="line">                          .addListener(</span><br><span class="line">                              <span class="comment">//将消息写到客户端，并添加 ChannelFutureListener，</span></span><br><span class="line">                              <span class="comment">//以便消息一被写完就关闭连接</span></span><br><span class="line">                              ChannelFutureListener.CLOSE);</span><br><span class="line">                    &#125;</span><br><span class="line">                  &#125;);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;);</span><br><span class="line">      <span class="comment">//绑定服务器以接受连接</span></span><br><span class="line">      ChannelFuture f = b.bind().sync();</span><br><span class="line">      f.channel().closeFuture().sync();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      <span class="comment">//释放所有的资源</span></span><br><span class="line">      group.shutdownGracefully().sync();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>NettyNioServer.java</strong></p>
+<ul>
+<li>不同点在于EventLoopGroup的类型(<code>NioEventLoopGroup</code>)和服务器Channel的类型(<code>NioServerSocketChannel</code>)。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NettyNioServer</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">server</span><span class="params">(<span class="keyword">int</span> port)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> ByteBuf buf =</span><br><span class="line">        Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(<span class="string">"Hi!\r\n"</span>,</span><br><span class="line">            Charset.forName(<span class="string">"UTF-8"</span>)));</span><br><span class="line">    <span class="comment">//为非阻塞模式使用NioEventLoopGroup</span></span><br><span class="line">    NioEventLoopGroup group = <span class="keyword">new</span> NioEventLoopGroup();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">//创建ServerBootstrap</span></span><br><span class="line">      ServerBootstrap b = <span class="keyword">new</span> ServerBootstrap();</span><br><span class="line">      b.group(group)</span><br><span class="line">          .channel(NioServerSocketChannel.class)</span><br><span class="line">          .localAddress(<span class="keyword">new</span> InetSocketAddress(port))</span><br><span class="line">          <span class="comment">//指定 ChannelInitializer，对于每个已接受的连接都调用它</span></span><br><span class="line">          .childHandler(<span class="keyword">new</span> ChannelInitializer&lt;SocketChannel&gt;() &#123;</span><br><span class="line">              <span class="meta">@Override</span></span><br><span class="line">              <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">initChannel</span><span class="params">(SocketChannel ch)</span></span></span><br><span class="line"><span class="function">                  <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                ch.pipeline().addLast(</span><br><span class="line">                    <span class="comment">//添加 ChannelInboundHandlerAdapter以接收和处理事件</span></span><br><span class="line">                    <span class="keyword">new</span> ChannelInboundHandlerAdapter() &#123;</span><br><span class="line">                      <span class="meta">@Override</span></span><br><span class="line">                      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">channelActive</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">                          //将消息写到客户端，并添加ChannelFutureListener，</span></span></span><br><span class="line"><span class="function"><span class="params">                          //以便消息一被写完就关闭连接</span></span></span><br><span class="line"><span class="function"><span class="params">                          ChannelHandlerContext ctx)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                        ctx.writeAndFlush(buf.duplicate())</span><br><span class="line">                            .addListener(</span><br><span class="line">                                ChannelFutureListener.CLOSE);</span><br><span class="line">                      &#125;</span><br><span class="line">                    &#125;);</span><br><span class="line">              &#125;</span><br><span class="line">            &#125;</span><br><span class="line">          );</span><br><span class="line">      <span class="comment">//绑定服务器以接受连接</span></span><br><span class="line">      ChannelFuture f = b.bind().sync();</span><br><span class="line">      f.channel().closeFuture().sync();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      <span class="comment">//释放所有的资源</span></span><br><span class="line">      group.shutdownGracefully().sync();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Netty为每种传输的实现都暴露了相同的API</strong></p>
+<hr>
+<h2 id="传输API"><a href="#传输API" class="headerlink" title="传输API"></a>传输API</h2><ul>
+<li><strong>每个Channel都会被分配一个ChannelPipeline和ChannelConfig</strong>。ChannelConfig包含了该Channel的所有配置设置，支持热更新。</li>
+<li>ChannelPipeline持有所有将应用于入站和出站数据以及事件的ChannelHandler, 这些Handler实现了应用程序用于处理状态变化以及数据处理的逻辑。</li>
+<li>ChannelHandler的用途<ul>
+<li>数据格式的转换</li>
+<li>异常通知</li>
+<li>Channel变为活动或者非活动的通知。</li>
+<li>Channel注册到EventLoop或者从EventLoop注销时的通知</li>
+<li>有关用户自定义事件的通知</li>
+</ul>
+</li>
+<li>可以根据需要通过添加或者删除ChannelHandler实例来修改ChannelPipeline, 如：向ChannelPipeline添加适当的ChannelHandler来按需的支持StartTLS协议。（灵活性）</li>
+</ul>
+<p><img src="http://note.youdao.com/yws/res/40492/WEBRESOURCEbf16f89760ccf0986888f2e816d714fd" alt="ch4-channel-interface-hierarchy.png-43.7kB"></p>
+<p><strong>Channel的基本方法</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">ChannelId id(); // Channel的全局唯一的ID；</span><br><span class="line"></span><br><span class="line">EventLoop eventLoop(); // Channel被注册到的EventLoop</span><br><span class="line">Channel parent(); // 当前Channel的父Channel.</span><br><span class="line">ChannelConfig config(); // 当前Channel的Config.</span><br><span class="line">boolean isOpen(); // true如果当前Channel open。</span><br><span class="line">boolean isRegistered(); // truerugosa当前Channel被注册到了一个EventLoop </span><br><span class="line">boolean isActive(); // true 如果当前Channel是active的。</span><br><span class="line">SocketAddress localAddress();</span><br><span class="line">SocketAddress remoteAddress();</span><br><span class="line">ChannelFuture closeFuture(); // ChannelFuture which will be notified when this channel is closed</span><br><span class="line">boolean isWritable(); // true- IO线程立即处理请求的写操作</span><br><span class="line">//...</span><br><span class="line">ChannelPipeline pipeline(); // 返回分配给Channel的ChannelPipeline</span><br><span class="line">//...</span><br><span class="line">Channel read(); </span><br><span class="line">write(): 数据写到远程节点，这个数据将被传送到ChannelPipeline中并且排队直到它被冲刷。</span><br><span class="line">Channel flush();// 将之前已经写的数据冲刷到底层。</span><br><span class="line">writeAndFlush(): // 等效于先write后flush。</span><br></pre></td></tr></table></figure>
+<p><strong>写出到Channel</strong></p>
+<ul>
+<li>记住所有的<strong>出站操作</strong>都是返回<strong>ChannelFuture</strong>的，这样就可以添加相应的监听。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Channel channel = ...</span><br><span class="line">ByteBuf buf = Unpooled.copiedBuffer(<span class="string">"your data"</span>, CharsetUtil.UTF_8);</span><br><span class="line">ChannelFuture cf = channel.writeAndFlush(buf);</span><br><span class="line">cf.addListener(<span class="keyword">new</span> ChannelFutureListener() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">operationComplete</span><span class="params">(ChannelFuture future)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (future.isSuccess()) &#123;</span><br><span class="line">            System.out.println(<span class="string">"Write successful"</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            System.err.println(<span class="string">"Write error"</span>);</span><br><span class="line">            future.cause().printStacktrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><strong>多个线程使用同一个Channel</strong></p>
+<ul>
+<li><strong>Netty的Channel是线程安全的</strong>，所以可以在多个线程中使用同一个Channel进行数据的发送。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> Channel channel = ...</span><br><span class="line"><span class="comment">// 创建持有要写数据的Buf。</span></span><br><span class="line"><span class="keyword">final</span> ByteBuf buf = Unpooled.copiedBuffer(<span class="string">"your data"</span>, CharsetUtil.UTF_8).retain();</span><br><span class="line">Runnable writer = <span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        channel.write(buf.duplicate()); <span class="comment">// 将数据写入到channel</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">Executor executor = Executors.newCachedThreadPool();</span><br><span class="line"><span class="comment">// write in one thread</span></span><br><span class="line">executor.execute(writer);</span><br><span class="line"><span class="comment">// write in another thread</span></span><br><span class="line">executor.execute(writer);</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="内置的传输"><a href="#内置的传输" class="headerlink" title="内置的传输"></a>内置的传输</h2><table>
+<thead>
+<tr>
+<th>项目</th>
+<th style="text-align:right">价格</th>
+<th style="text-align:center">数量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NIO</td>
+<td style="text-align:right">io.netty.channel.socket.nio</td>
+<td style="text-align:center">基于java.nio.channels</td>
+</tr>
+<tr>
+<td>Epoll</td>
+<td style="text-align:right">io.netty.channel.epoll</td>
+<td style="text-align:center">由JNI驱动的epoll()和非阻塞IO，支持只有在Linux上可用的很多特性，比NIO快</td>
+</tr>
+<tr>
+<td>OIO</td>
+<td style="text-align:right">io.netty.channel.socket.oio</td>
+<td style="text-align:center">java.net包作为基础，使用阻塞流</td>
+</tr>
+<tr>
+<td>Local</td>
+<td style="text-align:right">io.netty.channel.local</td>
+<td style="text-align:center">可以在VM内部通过管道进行通信的本地传输</td>
+</tr>
+<tr>
+<td>Embedded</td>
+<td style="text-align:right">io.netty.channel.embedded</td>
+<td style="text-align:center">Embeded传输，充分使用ChannelHandler而又不需要一个真正的基于网络的传输，测试ChannelHandler时常用</td>
+</tr>
+</tbody>
+</table>
+<h3 id="NIO-–-非阻塞IO"><a href="#NIO-–-非阻塞IO" class="headerlink" title="NIO – 非阻塞IO"></a>NIO – 非阻塞IO</h3><ul>
+<li><code>NIO</code>使用了<strong>基于选择器的API</strong>，提供了所有IO操作的全异步实现．选择器充当一个注册表，可以<strong>请求在Channel状态发送变化的时候得到通知</strong>。状态变化包括<ul>
+<li>新的Channel已经接受并且就绪</li>
+<li>Channel连接完成</li>
+<li>Channel已经有就绪可供读取的数据</li>
+<li>Channel可用于写数据。</li>
+</ul>
+</li>
+<li><strong>选择器运行在一个检查状态变化并对其作出响应的线程上，在应用程序对状态的改变作出响应后，选择器将会被重置，并且重复这个过程</strong>。</li>
+<li>请求通知的状态变化集，在<code>java.nio.channels.SelectionKey</code>中定义<ul>
+<li>OP_ACCEPT: 请求在接受新连接并且创建Channel的时候获得通知。</li>
+<li>OP_CONNECT: 请求在创立一个连接的时候获得通知。</li>
+<li>OP_READ: 请求当数据已经就绪，可以从Channel读取时获得通知</li>
+<li>OP_WRITE: 请求当可以向Channel写更多的数据时获得通知。</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://note.youdao.com/yws/res/40497/WEBRESOURCE54a892e9e1a15b60158dfef4a674a679" alt="ch4-selecotr.png-155.9kB"></p>
+<h3 id="Epoll-用于Linux的本地非阻塞传输"><a href="#Epoll-用于Linux的本地非阻塞传输" class="headerlink" title="Epoll - 用于Linux的本地非阻塞传输"></a>Epoll - 用于Linux的本地非阻塞传输</h3><ul>
+<li>Linux的epoll()提供了一个高度可拓展的IO事件通知特性。Linux JDK NIO API使用了这些特性。</li>
+<li>Netty为Linux提供了一组NIO的API，其以一种和本身的设计更加一致的方式使用epoll(), 并且以更加<strong>轻量级的方式使用中断</strong>(JDK是水平触发，Netty是边沿触发)。这个版本在高负载下比JDk的NIO实现高效。</li>
+<li>更改的地方只是 NioEventLoopGroup -&gt; EpollEventLoopGroup；NioServerSocketChannel -&gt; EpollServerSocketChanenl。</li>
+</ul>
+<h3 id="OIO-旧的阻塞IO"><a href="#OIO-旧的阻塞IO" class="headerlink" title="OIO - 旧的阻塞IO"></a>OIO - 旧的阻塞IO</h3><ul>
+<li>Netty如何使用于异步传输相同的API来支持OIO的？ Netty利用了<code>SO_TIMEOUT</code>的这个SOCKET标志，它指定了等待一个IO操作完成的最大的毫秒数。如果操作在这段时间还没有完成，那么会抛出一个SocketTimeOutException异常，Netty将捕获这个异常并继续处理循环。在EventLoop再次运行的时候，它将再次尝试，这实际上也是类似于Netty这样的异步框架能够支持OIO的唯一方式。</li>
+</ul>
+<h3 id="用于JVM内部通信的Local传输"><a href="#用于JVM内部通信的Local传输" class="headerlink" title="用于JVM内部通信的Local传输"></a>用于JVM内部通信的Local传输</h3><ul>
+<li>Netty提供的Local传输，用于在同一个JVM内部中运行的客户端和服务器程序之间的异步通信。</li>
+<li>在这个传输中，和服务器Channel关联的SocketAddress没有绑定到物理网络地址，SocketAddress在服务器还在运行的时候被存储在注册表中，在Channel关闭的时候注销。客户端希望连接到的使用这个传输的服务器也必须使用它。</li>
+</ul>
+<h3 id="Embeded传输"><a href="#Embeded传输" class="headerlink" title="Embeded传输"></a>Embeded传输</h3><ul>
+<li>可以将一组ChannelHandler作为帮助器嵌入到其他的ChannelHandler的内部。这样就可以拓展一个ChannelHandler的功能而又不需要修改其内部的代码。</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/Netty/" rel="tag"># Netty</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/01/netty-basic-components/" rel="next" title="Netty的基本组件">
+                <i class="fa fa-chevron-left"></i> Netty的基本组件
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/06/01/netty-bytebuf/" rel="prev" title="netty-bytebuf基础">
+                netty-bytebuf基础 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/self.jpg"
+                alt="darcy" />
+            
+              <p class="site-author-name" itemprop="name">darcy</p>
+              <p class="site-description motion-element" itemprop="description">Do Have Patience In What You LOVE.</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">53</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">33</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="http://douban.com/people/70670266" target="_blank" title="douban">
+                      
+                        <i class="fa fa-fw fa-globe"></i>douban</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友链
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.zhenlanghuo.top/" title="zhenlang huo" target="_blank">zhenlang huo</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://xawei.me/" title="xinan wei" target="_blank">xinan wei</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#传输迁移"><span class="nav-number">1.</span> <span class="nav-text">传输迁移</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#不通过Netty使用OIO和NIO"><span class="nav-number">1.1.</span> <span class="nav-text">不通过Netty使用OIO和NIO</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通过Netty使用OIO和NIO"><span class="nav-number">1.2.</span> <span class="nav-text">通过Netty使用OIO和NIO</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#传输API"><span class="nav-number">2.</span> <span class="nav-text">传输API</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#内置的传输"><span class="nav-number">3.</span> <span class="nav-text">内置的传输</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NIO-–-非阻塞IO"><span class="nav-number">3.1.</span> <span class="nav-text">NIO – 非阻塞IO</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Epoll-用于Linux的本地非阻塞传输"><span class="nav-number">3.2.</span> <span class="nav-text">Epoll - 用于Linux的本地非阻塞传输</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OIO-旧的阻塞IO"><span class="nav-number">3.3.</span> <span class="nav-text">OIO - 旧的阻塞IO</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用于JVM内部通信的Local传输"><span class="nav-number">3.4.</span> <span class="nav-text">用于JVM内部通信的Local传输</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Embeded传输"><span class="nav-number">3.5.</span> <span class="nav-text">Embeded传输</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">darcy</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.4.js"></script>
+  <script>AV.initialize("nDVrc1Rvjlwx4V9XScsLSm9q-gzGzoHsz", "4ONqgToWREwRHxcX9qRXFhlL");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
